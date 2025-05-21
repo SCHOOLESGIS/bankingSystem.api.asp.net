@@ -58,7 +58,7 @@ namespace WebApplication2.Controllers
         [HttpGet("client/{clientId}")]
         public ActionResult<IEnumerable<Compte>> RechercherComptesClient(int clientId)
         {
-            var comptes = _service.ListeComptesClient(clientId);
+            var comptes = _service.AfficherComptesClient(clientId);
             if (comptes == null || !comptes.Any())
             {
                 return NotFound($"Aucun compte(s) trouvé(s) avec l'id {clientId}");

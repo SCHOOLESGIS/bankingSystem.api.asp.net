@@ -5,8 +5,8 @@ Application web développée avec **ASP.NET Core 9 MVC** utilisant **SQL Server*
 
 ## 🧱 Stack Technique
 
-- **.NET 9 / ASP.NET Core MVC** --- OK...
-- **Entity Framework Core** --- loading...
+- **.NET 9 / ASP.NET Core MVC 4.8** --- OK...
+- **EntityFramework 6** --- loading...
 - **SQL Server** (LocalDB) --- loading...
 - **Razor Pages** --- loading...
 
@@ -21,7 +21,7 @@ Application web développée avec **ASP.NET Core 9 MVC** utilisant **SQL Server*
 git clone git@github.com:SCHOOLESGIS/bankingSystem.api.asp.net.git
 cd nom-du-projet
 dotnet restore
-```
+``` 
 
 ### ▶️ Démarrer l'application
 

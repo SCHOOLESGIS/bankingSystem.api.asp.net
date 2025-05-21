@@ -13,7 +13,7 @@ namespace WebApplication2.Controllers
         private readonly BanqueService _service = new BanqueService();
 
         [HttpGet]
-        public IActionResult GetClients() => Ok(_service.ListeClient());
+        public IActionResult GetClients() => Ok(_service.AfficherClients());
 
         [HttpPost]
         public IActionResult AddClient([FromBody] Client client)

@@ -66,7 +66,7 @@ namespace WebApplication2.Service
             return Clients.Where(c => c.Nom.StartsWith(Nom)).ToList();
         }
 
-        public List<Client> ListeClient ()
+        public List<Client> AfficherClients ()
         {
             return Clients;
         }
@@ -118,7 +118,7 @@ namespace WebApplication2.Service
             return Comptes.FirstOrDefault(c => c.Id == Id);
         }
 
-        public List<Compte> ListeComptesClient(int Id)
+        public List<Compte> AfficherComptesClient(int Id)
         {
             return Comptes.Where(c => c.Client.Id == Id).ToList();
         }
