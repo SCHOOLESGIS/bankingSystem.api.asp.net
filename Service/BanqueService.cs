@@ -14,10 +14,18 @@ namespace WebApplication2.Service
         public bool AjouterClient (Client client)
         {
             bool exists = Clients.Where(c => c.Nom.Equals(client.Nom)).Any();
-            if (! exists)
+            if (!exists)
             {
-                Clients.Add(client);
-                return true;
+                using (var clientContext = new AppDbContext())
+                {
+                    if (!clientContext.Clients.Where(c => c.Nom.Equals(client.Nom)).Any())
+                    {
+                        Clients.Add(client);
+                        clientContext.Clients.Add(client);
+                        clientContext.SaveChanges();
+                        return true;
+                    }
+                }
             }
             return false;
         }
@@ -27,15 +35,33 @@ namespace WebApplication2.Service
             Clients.ForEach(c => {
                 if (c.Id == updateClient.Id)
                 {
-                    c.Nom = updateClient.Nom;
-                    c.Prenom = updateClient.Prenom;
-                    c.Adresse = updateClient.Adresse;
-                    c.CodePostal = updateClient.CodePostal;
-                    c.Telephone = updateClient.Telephone;
-                    c.Ville = updateClient.Ville;
+                    using (var clientContext = new AppDbContext())
+                    {
+                        Client client = clientContext.Clients.Where(cc => cc.Nom.Equals(updateClient.Nom)).FirstOrDefault();
+                        if (client != null)
+                        {
+                            //list
+                            c.Nom = updateClient.Nom;
+                            c.Prenom = updateClient.Prenom;
+                            c.Adresse = updateClient.Adresse;
+                            c.CodePostal = updateClient.CodePostal;
+                            c.Telephone = updateClient.Telephone;
+                            c.Ville = updateClient.Ville;
+
+                            //context
+                            client.Nom = updateClient.Nom;
+                            client.Prenom = updateClient.Prenom;
+                            client.Adresse = updateClient.Adresse;
+                            client.CodePostal = updateClient.CodePostal;
+                            client.Telephone = updateClient.Telephone;
+                            client.Ville = updateClient.Ville;
+                            clientContext.Clients.Add(client);
+                            clientContext.SaveChanges();
+
+                        }
+                    }
                 }
             });
-
             return false;
         }
 
@@ -45,7 +71,29 @@ namespace WebApplication2.Service
 
             if (deleteClient != null)
             {
-                Clients.Remove(deleteClient);
+                using (var clientContext = new AppDbContext())
+                {
+                    using (var clientTrans = clientContext.Database.BeginTransaction())
+                    {
+                        try
+                        {
+                            var client = clientContext.Clients.Where(c => c.Nom.Equals(deleteClient.Nom));
+                            if (client.Any())
+                            {
+                                var clientComptes = AfficherComptesClient(Id);
+                                clientComptes.ForEach(cc => SupprimerCompte(cc.Id));
+                                Clients.Remove(deleteClient);
+                                clientContext.Clients.Remove(client.FirstOrDefault());
+                                clientContext.SaveChanges();
+                                return true;
+                            }
+                            clientTrans.Commit();
+                        } catch
+                        {
+                            clientTrans.Rollback();
+                        }
+                    }
+                }
                 return true;
             }
             return false;
@@ -53,22 +101,86 @@ namespace WebApplication2.Service
 
         public Client RechercherClient (int Id)
         {
-            return Clients.FirstOrDefault(c => c.Id == Id);
+            var client = Clients.Where(c => c.Id == Id);
+            if (!client.Any())
+            {
+                using (var clientContext = new AppDbContext())
+                {
+                    var cc = clientContext.Clients.Where(c => c.Id == Id);
+                    if (!cc.Any())
+                    {
+                        return cc.FirstOrDefault();
+                    } else
+                    {
+                        return null;
+                    }                    
+                }
+            } else
+            {
+                return client.FirstOrDefault();
+            }
         }
 
         public Client RechercherClientParNom(string Nom)
         {
-            return Clients.FirstOrDefault(c => c.Nom.StartsWith(Nom));
+            var client = Clients.Where(c => c.Nom.StartsWith(Nom));
+            if (!client.Any())
+            {
+                using (var clientContext = new AppDbContext())
+                {
+                    var cc = clientContext.Clients.Where(c => c.Nom.StartsWith(Nom));
+                    if (!cc.Any())
+                    {
+                        return cc.FirstOrDefault();
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+            }
+            else
+            {
+                return client.FirstOrDefault();
+            }
         }
 
         public List<Client> RechercherLesClientsParNom(string Nom)
         {
-            return Clients.Where(c => c.Nom.StartsWith(Nom)).ToList();
+            var clients = Clients.Where(c => c.Nom.StartsWith(Nom)).ToList();
+            if (!clients.Any())
+            {
+                using (var clientContext = new AppDbContext())
+                {
+                    var cc = clientContext.Clients.Where(c => c.Nom.StartsWith(Nom)).ToList();
+                    if (!cc.Any())
+                    {
+                        return cc;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+            }
+            else
+            {
+                return clients;
+            }
         }
 
         public List<Client> AfficherClients ()
         {
-            return Clients;
+            if (!Clients.Any())
+            {
+                using (var clientContext = new AppDbContext())
+                {
+                    return clientContext.Clients.ToList();
+                }
+            } else
+            {
+                return Clients;
+            }
         }
 
         //COMPTES
@@ -107,7 +219,28 @@ namespace WebApplication2.Service
 
             if (deleteCompte != null)
             {
-                Comptes.Remove(deleteCompte);
+                using (var compteContext = new AppDbContext())
+                {
+                    using (var compteTrans = compteContext.Database.BeginTransaction())
+                    {
+                        try
+                        {
+                            var compte = compteContext.Comptes.Where(c => c.Id == Id );
+                            if (compte.Any())
+                            {
+                                Comptes.Remove(deleteCompte);
+                                compteContext.Comptes.Remove(compte.FirstOrDefault());
+                                compteContext.SaveChanges();
+                                return true;
+                            }
+                            compteTrans.Commit();
+                        }
+                        catch
+                        {
+                            compteTrans.Rollback();
+                        }
+                    }
+                }
                 return true;
             }
             return false;
@@ -120,7 +253,22 @@ namespace WebApplication2.Service
 
         public List<Compte> AfficherComptesClient(int Id)
         {
-            return Comptes.Where(c => c.Client.Id == Id).ToList();
+            var client = RechercherClient(Id);
+            if (client != null)
+            {
+                var comptesClient = Comptes.Where(cc => cc.ClientId == Id).ToList();
+                if (!comptesClient.Any())
+                {
+                    using (var comptesContext = new AppDbContext())
+                    {
+                        return comptesContext.Comptes.Where(cc => cc.ClientId == Id).ToList();
+                    }
+                } else
+                {
+                    return comptesClient;
+                }
+            }
+            return Comptes.Where(c => c.ClientId == Id).ToList();
         }
 
         public List<Compte> AfficherComptes()
